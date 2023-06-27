@@ -13,6 +13,7 @@ int myshell_help(char **inp_args);
 int myshell_exit(char **inp_args);
 int myshell_echo(char **inp_args);
 int print_his(char **inp_args);
+int free_his(char **inp_args);
 
 /*
   List of builtin commands, followed by their corresponding functions.
@@ -22,14 +23,16 @@ char *builtin_str[] = {
     "help",
     "exit",
     "myshell_echo",
-    "print_his"};
+    "print_his",
+    "free_his"};
 
 int (*builtin_func[])(char **) = {
     &myshell_cd,
     &myshell_help,
     &myshell_exit,
     &myshell_echo,
-    &print_his};
+    &print_his,
+    &free_his};
 
 int myshell_num_builtins()
 {
@@ -128,7 +131,6 @@ void add_to_history(struct History* history, char* commandline) {
   }
 //   added history 
   history->inp_args[history->start] = strdup(commandline);
-  printf("%s ", commandline);
   history->start = (history->start + 1) % history->max_size;
 }
 
@@ -157,6 +159,11 @@ void free_history(struct History* history) {
 
 int print_his(char **inp_args){
   print_history(history);
+}
+
+int free_his(char **inp_args){
+  free_history(history);
+  return 1;
 }
 
 
