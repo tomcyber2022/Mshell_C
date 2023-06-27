@@ -12,6 +12,7 @@ int myshell_cd(char **inp_args);
 int myshell_help(char **inp_args);
 int myshell_exit(char **inp_args);
 int myshell_echo(char **inp_args);
+int print_his(char **inp_args);
 
 /*
   List of builtin commands, followed by their corresponding functions.
@@ -20,13 +21,15 @@ char *builtin_str[] = {
     "cd",
     "help",
     "exit",
-    "myshell_echo"};
+    "myshell_echo",
+    "print_his"};
 
 int (*builtin_func[])(char **) = {
     &myshell_cd,
     &myshell_help,
     &myshell_exit,
-    &myshell_echo};
+    &myshell_echo,
+    &print_his};
 
 int myshell_num_builtins()
 {
@@ -89,28 +92,28 @@ int myshell_exit(char **inp_args)
 }
 
 int myshell_echo(char **inp_args){
-    int c = 0; 
-    int cr;
-  while (c != EOF) 
-    { 
-      printf("\n Enter input: "); 
-      c = getchar(); 
-      cr = getchar();  /* Read and discard the carriage return */
-      putchar(c); 
-    } 
-    return 1;
-}
+  // printf("\n Enter input: "); 
+  char str[50];
 
+  printf("\n Enter input: ");
+  scanf("%[^\n]+", str);
+
+  printf(" Echo : %s \n" , str);
+
+  return 1;
+}
 
 struct History {
   char** inp_args;
-  int BUFSIZE; 
+  int max_size; 
   int start; // points to last empty place in inp_args
 };
 
+struct History* history; 
+
 
 void initialize_history(struct History* history, int Size) {
-  history->BUFSIZE = Size;
+  history->max_size = Size;
   history->inp_args = malloc(Size * sizeof(char*));
   int i;
   for (i = 0; i < Size; ++i) {
@@ -123,32 +126,37 @@ void add_to_history(struct History* history, char* commandline) {
   if (history->inp_args[history->start] != NULL) {
     free(history->inp_args[history->start]);
   }
-//   added history  
-  history->inp_args[history->start] = commandline;
-  history->start = (history->start + 1) % history->BUFSIZE;
+//   added history 
+  history->inp_args[history->start] = strdup(commandline);
+  printf("%s ", commandline);
+  history->start = (history->start + 1) % history->max_size;
 }
 
 void print_history(struct History* history) {
   int begin = history->start;
-  int Size = history -> BUFSIZE;
+  int Size = history -> max_size;
   for (int i = 0; i < Size; ++i) {
     if (history->inp_args[begin] != NULL) {
       printf("%s\n", history->inp_args[begin]);
     }
     begin--;
-    begin += history -> BUFSIZE;
-    begin %= history -> BUFSIZE;
+    begin += history -> max_size;
+    begin %= history -> max_size;
   }
 }
 
 void free_history(struct History* history) {
-    int Size = history -> BUFSIZE;
+    int Size = history -> max_size;
   for (int i = 0; i < Size; ++i) {
     if (history->inp_args[i] != NULL) {
       free(history->inp_args[i]);
     }
   }
   free(history->inp_args);
+}
+
+int print_his(char **inp_args){
+  print_history(history);
 }
 
 
@@ -293,8 +301,8 @@ void myshell_loop()
     char **inp_args;
     int inp_status;
 
-    struct History* history; 
-    initialize_history(history, 1024); 
+    history = (struct History*)malloc(sizeof(struct History));
+    initialize_history(history, 64); 
     // here i used size as 1024 so at max 1024 commands can be stored as history at any instant  
 
 
@@ -305,14 +313,13 @@ void myshell_loop()
         inp_args = myshell_parseinp(inp_line);
         inp_status = myshell_execute(inp_args);
 
+
         add_to_history(history, inp_line);
 
         free(inp_line);
         free(inp_args);
     } while (inp_status);
 
-    // for printing history
-    print_history(history);
 }
 
 /**
